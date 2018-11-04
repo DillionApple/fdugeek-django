@@ -34,6 +34,5 @@ def get_md5(bytes):
     hash.update(bytes)
     return hash.hexdigest()
 
-
 if __name__ == "__main__":
     print(check_fdu_auth("17210240047", "hello"))

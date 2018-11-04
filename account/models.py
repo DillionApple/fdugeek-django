@@ -26,3 +26,9 @@ class Account(models.Model):
 
     def __str__(self):
         return self.user.username
+
+class AccountConfirmCode(models.Model):
+
+    account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name="account_confirm_code")
+    code = models.CharField(max_length=128, default="")
+    update_time = models.DateTimeField(auto_now=True)

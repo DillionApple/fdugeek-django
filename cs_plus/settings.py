@@ -125,39 +125,47 @@ MEDIA_ROOT = "./media/"
 
 STATIC_URL = '/static/'
 
+# SMTP
+SMTP_HOST = "smtp.163.com"
+SMTP_PORT = 465
+SMTP_FROM_ADDR = "fdugeek_admin@163.com"
+SMTP_PASSWORD = "param_smtp_password"
+
+if DEBUG:
 #CORS
 
-INSTALLED_APPS.append('corsheaders')  # cors: "pip install django-cors-headers" before use this app
+    INSTALLED_APPS.append('corsheaders')  # cors: "pip install django-cors-headers" before use this app
 
-MIDDLEWARE.append('corsheaders.middleware.CorsMiddleware')  # cors
-MIDDLEWARE.append('django.middleware.common.CommonMiddleware')  # cors
+    MIDDLEWARE.append('corsheaders.middleware.CorsMiddleware')  # cors
+    MIDDLEWARE.append('django.middleware.common.CommonMiddleware')  # cors
 
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = (
-    '*',
-)
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ORIGIN_ALLOW_ALL = True
+    CORS_ORIGIN_WHITELIST = (
+        '*',
+    )
 
-CORS_ALLOW_METHODS = (
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-    'VIEW',
-)
+    CORS_ALLOW_METHODS = (
+        'DELETE',
+        'GET',
+        'OPTIONS',
+        'PATCH',
+        'POST',
+        'PUT',
+        'VIEW',
+    )
 
-CORS_ALLOW_HEADERS = (
-    'XMLHttpRequest',
-    'X_FILENAME',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-    'Pragma',
-)
+    CORS_ALLOW_HEADERS = (
+        'XMLHttpRequest',
+        'X_FILENAME',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+        'Pragma',
+    )
+

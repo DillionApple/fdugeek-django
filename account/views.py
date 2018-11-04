@@ -1,17 +1,20 @@
 import json
 import time
+import datetime
 
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
-from account.models import Account
-from account.utils import get_user_private_dict
+from account.models import Account, AccountConfirmCode
+from account.utils import get_user_private_dict, generate_account_confirm_code, send_confirm_code_to_fdu_mailbox
 from account.decorators import login_required
 from utils.api_utils import get_json_dict
 from utils.util_functions import get_md5, check_fdu_auth
+
 
 @require_POST
 def user_login(request):
@@ -19,36 +22,80 @@ def user_login(request):
     username = request.POST['username']
     password = request.POST['password']
 
-    json_dict = {
-        'err_code': 0,
-        'message': "Login success",
-        'data': {},
-    }
+    json_dict = get_json_dict(data={}, message="Login Success")
+
+    user = authenticate(username=username, password=password)
+    if user:
+        if user.is_active:
+            login(request, user)
+            return JsonResponse(json_dict)
+        else:
+            json_dict['err_code'] = -1
+            json_dict['message'] = "请验证您的学号邮箱"
+            return JsonResponse(json_dict)
+    else:
+        json_dict['err_code'] = -1
+        json_dict['message'] = "用户名或密码错误，或者请确认您已完成邮箱认证"
+        return JsonResponse(json_dict)
+
+@require_POST
+def register(request):
+
+    request_data = json.loads(request.body.decode('utf-8'))
+    username = request_data['username']
+    password = request_data['password']
 
     try:
         user = User.objects.get(username=username)
     except ObjectDoesNotExist as e:
-        user = None
-
-    if user == None: # login for the first time, not registered
-        user_email_name = check_fdu_auth(username, password)
-        if user_email_name != None:
-            user = User(username=username)
-            user.set_password(password)
-            user.save()
-            account = Account(user=user)
-            account.nickname = user_email_name
-            account.save()
-
-    user = authenticate(username=username, password=password)
-    if user:
-        login(request, user)
-        return JsonResponse(json_dict)
+        user = User(username=username)
+        user.set_password(password)
+        user.is_active = False
+        user.save()
+        account = Account(user=user)
+        account.nickname = username
+        account.save()
+        account_confirm_code = AccountConfirmCode(account=account, code=generate_account_confirm_code())
+        account_confirm_code.save()
     else:
-        json_dict['err_code'] = -1
-        json_dict['message'] = "用户名或密码错误"
-        return JsonResponse(json_dict)
+        if user.is_active:
+            return JsonResponse(get_json_dict(data={}, err_code=-1, message="您已注册过"))
+        user.set_password(password)
+        user.save()
+        account_confirm_code = user.account.account_confirm_code
+        account_confirm_code.code = generate_account_confirm_code()
+        account_confirm_code.save()
 
+    send_confirm_code_to_fdu_mailbox(username, account_confirm_code.code)
+
+    return JsonResponse(get_json_dict(data={}))
+
+@require_GET
+def confirm_register(request):
+    REGISTER_STATUS_URL_TEMPLATE = "http://127.0.0.1:8080/#/register_status/{register_status}"
+
+    confirm_code = request.GET['confirm_code']
+    username = request.GET['username']
+
+    user = User.objects.get(username=username)
+
+    if user.is_active:
+        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="您已激活"))
+
+    thirty_minutes = timezone.timedelta(minutes=30)
+    due_time = user.account.account_confirm_code.update_time + thirty_minutes
+    now_time = timezone.now()
+
+
+    if (now_time > due_time):
+        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证链接过期，请重新注册"))
+
+    if confirm_code == user.account.account_confirm_code.code:
+        user.is_active = True
+        user.save()
+        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证成功，请前往登录"))
+    else:
+        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证出现错误"))
 
 @login_required
 @require_GET
