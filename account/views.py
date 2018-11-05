@@ -1,6 +1,7 @@
 import json
 import time
 import datetime
+import requests
 
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth import authenticate, login, logout
@@ -8,6 +9,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponseRedirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from django.core.files.base import ContentFile
 
 from account.models import Account, AccountConfirmCode
 from account.utils import get_user_private_dict, generate_account_confirm_code, send_confirm_code_to_fdu_mailbox
@@ -93,6 +95,8 @@ def confirm_register(request):
     if confirm_code == user.account.account_confirm_code.code:
         user.is_active = True
         user.save()
+        user_icon_response = requests.get("https://www.gravatar.com/avatar/{0}?s=256&d=identicon&r=PG".format(user.username))
+        user.account.icon.save(name='default_icon', content=ContentFile(user_icon_response.content))
         return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证成功，请前往登录"))
     else:
         return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证出现错误"))
