@@ -6,7 +6,7 @@ import requests
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.core.files.base import ContentFile
@@ -74,7 +74,6 @@ def register(request):
 
 @require_GET
 def confirm_register(request):
-    REGISTER_STATUS_URL_TEMPLATE = "http://127.0.0.1:8080/#/register_status/{register_status}"
 
     confirm_code = request.GET['confirm_code']
     username = request.GET['username']
@@ -82,7 +81,8 @@ def confirm_register(request):
     user = User.objects.get(username=username)
 
     if user.is_active:
-        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="您已激活"))
+        return HttpResponse("<h3>您已激活，请直接登录</h3>")
+        # return JsonResponse(get_json_dict(data={}, err_code=-1, message="您已激活"))
 
     thirty_minutes = timezone.timedelta(minutes=30)
     due_time = user.account.account_confirm_code.update_time + thirty_minutes
@@ -90,16 +90,19 @@ def confirm_register(request):
 
 
     if (now_time > due_time):
-        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证链接过期，请重新注册"))
+        return HttpResponse("<h3>验证链接过期，请重新注册<h3>")
+        # return JsonResponse(get_json_dict(data={}, err_code=-1, message="验证链接过期，请重新注册"))
 
     if confirm_code == user.account.account_confirm_code.code:
         user.is_active = True
         user.save()
         user_icon_response = requests.get("https://www.gravatar.com/avatar/{0}?s=256&d=identicon&r=PG".format(user.username))
         user.account.icon.save(name='default_icon', content=ContentFile(user_icon_response.content))
-        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证成功，请前往登录"))
+        return HttpResponse("<h3>验证成功</h3>")
+        # return JsonResponse(get_json_dict(data={}, err_code=0, message="验证成功，请前往登录"))
     else:
-        return HttpResponseRedirect(REGISTER_STATUS_URL_TEMPLATE.format(register_status="验证出现错误"))
+        return HttpResponse("<h3>验证出现问题</h3>")
+        #return JsonResponse(get_json_dict(data={}, err_code=-1, message="验证出现问题"))
 
 @login_required
 @require_GET
