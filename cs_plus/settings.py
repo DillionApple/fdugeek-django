@@ -78,8 +78,11 @@ WSGI_APPLICATION = 'cs_plus.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'param_mysql_db_name',
+        'USER': 'param_mysql_user',
+        'PASSWORD': 'param_mysql_password',
+        'HOST': 'param_mysql_host',
     }
 }
 
@@ -124,6 +127,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = "./media/"
 
 STATIC_URL = '/static/'
+
+# Change in django 2.1. Need to set these two fields to be compatible with django2.0
+SESSION_COOKIE_SAMESITE = None
+CRSF_COOKIE_SAMESITE = None
 
 # SMTP
 SMTP_HOST = "smtp.163.com"
