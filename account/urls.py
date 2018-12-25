@@ -10,4 +10,6 @@ urlpatterns = [
     path('change_detail/', views.change_detail),
     path('change_password/', views.change_password),
     path('change_icon/', views.change_icon),
+    path('public_key/', views.get_public_key),
+    path('refresh_token/', views.refresh_token),
 ]

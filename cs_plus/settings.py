@@ -138,6 +138,9 @@ SMTP_PORT = 465
 SMTP_FROM_ADDR = "fdugeek_admin@163.com"
 SMTP_PASSWORD = "param_smtp_password"
 
+# LOGIN REDIRECT URL
+LOGIN_REDIRECT_URL = "http://127.0.0.1:8000/account/login/"
+
 if DEBUG:
 #CORS
 

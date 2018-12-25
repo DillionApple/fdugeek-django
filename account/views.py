@@ -1,7 +1,7 @@
 import json
 import time
-import datetime
 import requests
+import jwt
 
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth import authenticate, login, logout
@@ -14,8 +14,14 @@ from django.core.files.base import ContentFile
 from account.models import Account, AccountConfirmCode
 from account.utils import get_user_private_dict, generate_account_confirm_code, send_confirm_code_to_fdu_mailbox
 from account.decorators import login_required
+from account.keys import PRIVATE_KEY, PUBLIC_KEY
 from utils.api_utils import get_json_dict
 from utils.util_functions import get_md5, check_fdu_auth
+
+@require_GET
+def get_public_key(request):
+
+    return HttpResponse(PUBLIC_KEY)
 
 
 @require_POST
@@ -29,16 +35,39 @@ def user_login(request):
     user = authenticate(username=username, password=password)
     if user:
         if user.is_active:
-            login(request, user)
-            return JsonResponse(json_dict)
+            expires = timezone.now() + timezone.timedelta(days=7)
+            jwt_payload = get_user_private_dict(user.account)
+            jwt_payload['expires'] = expires.strftime("%Y-%m-%d %H:%M:%S")
+            jwt_token = jwt.encode(jwt_payload, PRIVATE_KEY, algorithm="RS256").decode("utf-8")
+            response = JsonResponse(get_json_dict(data={}, err_code=0, message="Login success"))
+            response.set_cookie('jwt', jwt_token, max_age=604800)
+            return response
         else:
             json_dict['err_code'] = -1
             json_dict['message'] = "请验证您的学号邮箱"
-            return JsonResponse(json_dict)
+            response = JsonResponse(json_dict)
+            response.status_code = 403
+            return response
     else:
         json_dict['err_code'] = -1
-        json_dict['message'] = "用户名或密码错误，或者请确认您已完成邮箱认证"
-        return JsonResponse(json_dict)
+        json_dict['message'] = "用户名或密码错误"
+        response = JsonResponse(json_dict)
+        response.status_code = 403
+        return response
+
+@login_required
+def refresh_token(request):
+
+    jwt_payload = request.jwt_payload
+    jwt_payload['expires'] = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
+
+    jwt_token = jwt.encode(jwt_payload, PRIVATE_KEY, algorithm="RS256").decode("utf-8")
+
+    json_dict = get_json_dict(data={}, err_code=0, message="Refresh jwt token success")
+
+    response = JsonResponse(json_dict)
+    response.set_cookie('jwt', jwt_token, max_age=604800)
+    return response
 
 @require_POST
 def register(request):
@@ -98,23 +127,20 @@ def confirm_register(request):
         user.save()
         user_icon_response = requests.get("https://www.gravatar.com/avatar/{0}?s=256&d=identicon&r=PG".format(user.username))
         user.account.icon.save(name='default_icon', content=ContentFile(user_icon_response.content))
-        return HttpResponse("<h3>验证成功</h3>")
+        return HttpResponse("<h3>验证成功</h3>", status=200)
         # return JsonResponse(get_json_dict(data={}, err_code=0, message="验证成功，请前往登录"))
     else:
-        return HttpResponse("<h3>验证出现问题</h3>")
+        return HttpResponse("<h3>验证出现问题</h3>", status=403)
         #return JsonResponse(get_json_dict(data={}, err_code=-1, message="验证出现问题"))
 
 @login_required
 @require_GET
 def user_logout(request):
-    logout(request)
-    json_dict = {
-        'err_code': 0,
-        'message': "Logout success",
-        'data': {}
-    }
+    json_dict = get_json_dict(data={}, err_code=0, message="Logout success")
 
-    return JsonResponse(json_dict)
+    response = JsonResponse(json_dict)
+    response.delete_cookie('jwt')
+    return response
 
 @login_required
 @require_GET
@@ -164,7 +190,9 @@ def change_password(request):
         login(request, user)
         return JsonResponse(get_json_dict(data={}))
     else:
-        return JsonResponse(get_json_dict(err_code=-1, message="密码错误", data={}))
+        response = JsonResponse(get_json_dict(err_code=-1, message="密码错误", data={}))
+        response.status_code = 403
+        return response
 
 
 @login_required
@@ -182,4 +210,3 @@ def change_icon(request):
     account.save()
 
     return JsonResponse(get_json_dict(data={'icon': account.icon.url}))
-    
