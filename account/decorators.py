@@ -1,12 +1,13 @@
 import jwt
 
 from django.utils.timezone import datetime
-from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django.contrib.auth.models import User
 
 from cs_plus import settings
 
 from account.keys import PUBLIC_KEY
+from utils.api_utils import get_json_dict
 
 def login_required(func):
 
@@ -21,7 +22,10 @@ def login_required(func):
             request.jwt_payload = decoded
             request.user = User.objects.get(username=decoded['username'])
         except:
-            return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL)
+            json_dict = get_json_dict(data={}, err_code=-1, message="Login Required")
+            response = JsonResponse(json_dict)
+            response.status_code = 401
+            return response
         else:
             return func(request)
     

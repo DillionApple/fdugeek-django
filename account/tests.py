@@ -102,8 +102,9 @@ class AccountTestCase(TestCase):
         response = c.get(LOGOUT_URL)
         assert response.status_code == 200
         response = c.get(DETAIL_URL)
-        assert response.status_code == 302
-        assert response._headers['location'][1] == settings.LOGIN_REDIRECT_URL
+        assert response.status_code == 401
+        assert response.json()['err_code'] == -1
+        assert response.json()['message'] == "Login Required"
 
     # test functions
     # change_detail

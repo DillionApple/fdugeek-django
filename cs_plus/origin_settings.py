@@ -146,6 +146,13 @@ LOGIN_REDIRECT_URL = DEPLOY_HOST + "/app/#/login/"
 
 if DEBUG:
 
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'db.sqlite3',
+        }
+    }
+
     DEPLOY_HOST = "http://127.0.0.1:8000"
     LOGIN_REDIRECT_URL = DEPLOY_HOST + "/app/#/login/"
     
