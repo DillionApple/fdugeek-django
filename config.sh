@@ -12,9 +12,18 @@ PARAM_MYSQL_HOST=host
 # SMTP
 PARAM_SMTP_PASSWORD=password
 
+# ALLOWED_HOST
+PARAM_ALLOWED_HOST=127.0.0.1
+
+# HOST
+PARAM_DEPLOY_HOST=https://fdugeek.com
+
 function config_dev {
     # SMTP
     sed -i -e "s/param_smtp_password/$PARAM_SMTP_PASSWORD/g" $FINAL_SETTINGS_FILE
+
+    # ALLOWED HOST
+    sed -i -e "s|param_allowed_host|127.0.0.1|g" $FINAL_SETTINGS_FILE
 }
 
 function config_prod {
@@ -27,8 +36,14 @@ function config_prod {
     sed -i -e "s/param_mysql_password/$PARAM_MYSQL_PASSWORD/g" $FINAL_SETTINGS_FILE
     sed -i -e "s/param_mysql_host/$PARAM_MYSQL_HOST/g" $FINAL_SETTINGS_FILE
     
-    #SMTP    
+    # SMTP
     sed -i -e "s/param_smtp_password/$PARAM_SMTP_PASSWORD/g" $FINAL_SETTINGS_FILE
+
+    # ALLOWED_HOSTS
+    sed -i -e "s/param_allowed_host/$PARAM_ALLOWED_HOST/g" $FINAL_SETTINGS_FILE
+
+    # DEPLOY_HOST
+    sed -i -e "s|param_deploy_host|$PARAM_DEPLOY_HOST|g" $FINAL_SETTINGS_FILE
 }
 
 cd cs_plus
@@ -45,4 +60,4 @@ case $mode in
 	;;
     *)
 	echo dev/prod
-	esac
+esac

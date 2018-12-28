@@ -25,7 +25,7 @@ SECRET_KEY = '5ix)!2y9#c4t*dzmgn&ip(cnzjlt$w4&5tlyp!a(cwkxx5d==_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["param_allowed_host", ]
 
 
 # Application definition
@@ -138,12 +138,18 @@ SMTP_PORT = 465
 SMTP_FROM_ADDR = "fdugeek_admin@163.com"
 SMTP_PASSWORD = "param_smtp_password"
 
+# DEPLOY HOST
+DEPLOY_HOST = "param_deploy_host"
+
 # LOGIN REDIRECT URL
-LOGIN_REDIRECT_URL = "http://127.0.0.1:8000/account/login/"
+LOGIN_REDIRECT_URL = DEPLOY_HOST + "/app/#/login/"
 
 if DEBUG:
-#CORS
 
+    DEPLOY_HOST = "http://127.0.0.1:8000"
+    LOGIN_REDIRECT_URL = DEPLOY_HOST + "/app/#/login/"
+    
+    #CORS
     INSTALLED_APPS.append('corsheaders')  # cors: "pip install django-cors-headers" before use this app
 
     MIDDLEWARE.append('corsheaders.middleware.CorsMiddleware')  # cors

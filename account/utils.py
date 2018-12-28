@@ -1,7 +1,7 @@
+import random
 from io import StringIO
 import smtplib
 from email.mime.text import MIMEText
-import random
 
 from django.conf import settings
 
@@ -41,8 +41,8 @@ def send_confirm_code_to_fdu_mailbox(username, confirm_code):
     message = """
 你好：
     请点击下面的链接来验证您的在FDU GEEK注册时使用的邮箱，链接30分钟内有效：
-    http://127.0.0.1:8000/account/confirm_register/?username={username}&confirm_code={confirm_code}
-    """.format(username=username, confirm_code=confirm_code)
+    {host}/account/confirm_register/?username={username}&confirm_code={confirm_code}
+    """.format(host=settings.DEPLOY_HOST, username=username, confirm_code=confirm_code)
     subject = "FDU GEEK邮箱验证（no reply）"
     from_addr = "fdugeek_admin@163.com"
     to_addr = "{0}@fudan.edu.cn".format(username)
