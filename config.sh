@@ -20,7 +20,7 @@ PARAM_DEPLOY_HOST=https://fdugeek.com
 
 function config_dev {
     # SMTP
-    sed -i -e "s/param_smtp_password/$PARAM_SMTP_PASSWORD/g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_smtp_password|$PARAM_SMTP_PASSWORD|g" $FINAL_SETTINGS_FILE
 
     # ALLOWED HOST
     sed -i -e "s|param_allowed_host|127.0.0.1|g" $FINAL_SETTINGS_FILE
@@ -28,19 +28,19 @@ function config_dev {
 
 function config_prod {
     # DEBUG
-    sed -i -e "s/DEBUG = True/DEBUG = False/g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|DEBUG = True|DEBUG = False|g" $FINAL_SETTINGS_FILE
     
     # MYSQL
-    sed -i -e "s/param_mysql_db_name/$PARAM_MYSQL_DB_NAME/g" $FINAL_SETTINGS_FILE
-    sed -i -e "s/param_mysql_user/$PARAM_MYSQL_USER/g" $FINAL_SETTINGS_FILE
-    sed -i -e "s/param_mysql_password/$PARAM_MYSQL_PASSWORD/g" $FINAL_SETTINGS_FILE
-    sed -i -e "s/param_mysql_host/$PARAM_MYSQL_HOST/g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_mysql_db_name|$PARAM_MYSQL_DB_NAME|g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_mysql_user|$PARAM_MYSQL_USER|g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_mysql_password|$PARAM_MYSQL_PASSWORD|g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_mysql_host|$PARAM_MYSQL_HOST|g" $FINAL_SETTINGS_FILE
     
     # SMTP
-    sed -i -e "s/param_smtp_password/$PARAM_SMTP_PASSWORD/g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_smtp_password|$PARAM_SMTP_PASSWORD|g" $FINAL_SETTINGS_FILE
 
     # ALLOWED_HOSTS
-    sed -i -e "s/param_allowed_host/$PARAM_ALLOWED_HOST/g" $FINAL_SETTINGS_FILE
+    sed -i -e "s|param_allowed_host|$PARAM_ALLOWED_HOST|g" $FINAL_SETTINGS_FILE
 
     # DEPLOY_HOST
     sed -i -e "s|param_deploy_host|$PARAM_DEPLOY_HOST|g" $FINAL_SETTINGS_FILE
