@@ -126,7 +126,8 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = "./media/"
 
-STATIC_URL = '/static/'
+STATIC_URL = '/django_static/'
+STATIC_ROOT = './static/'
 
 # Change in django 2.1. Need to set these two fields to be compatible with django2.0
 SESSION_COOKIE_SAMESITE = None
