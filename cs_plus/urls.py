@@ -23,4 +23,6 @@ urlpatterns = [
     path('account/', include("account.urls")),
     path('picture_bed/', include("picture_bed.urls")),
     path('task/', include("task.urls")),
+    path('feedback/', include("feedback.urls")),
+    
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
