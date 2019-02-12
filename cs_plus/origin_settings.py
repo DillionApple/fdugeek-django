@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'account',
     'picture_bed',
     'task',
+    'feedback',
 ]
 
 MIDDLEWARE = [
