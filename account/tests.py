@@ -13,6 +13,7 @@ REGISTER_URL = "/account/register/"
 CONFIRM_REGISTER_URL = "/account/confirm_register/"
 LOGOUT_URL = "/account/logout/"
 DETAIL_URL = "/account/detail/"
+PUBLIC_DETAIL_URL = "/account/public_detail/"
 CHANGE_DETAIL_URL = "/account/change_detail/"
 CHANGE_PASSWORD_URL = "/account/change_password/"
 CHANGE_ICON_URL = "/account/change_icon/"
@@ -98,6 +99,12 @@ class AccountTestCase(TestCase):
         response = c.get(DETAIL_URL)
         assert response.status_code == 200
         assert response.json()['data']['username'] == "user0"
+        assert list(response.json()['data'].keys()).count('mobile_phone') == 1
+
+        response = c.get(PUBLIC_DETAIL_URL, {'username': 'user0'})
+        assert response.status_code == 200
+        assert response.json()['data']['username'] == "user0"
+        assert list(response.json()['data'].keys()).count('mobile_phone') == 0
 
         response = c.get(LOGOUT_URL)
         assert response.status_code == 200

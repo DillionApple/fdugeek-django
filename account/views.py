@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.core.files.base import ContentFile
 
 from account.models import Account, AccountConfirmCode
-from account.utils import get_user_private_dict, generate_account_confirm_code, send_confirm_code_to_fdu_mailbox
+from account.utils import get_user_private_dict, get_user_public_dict, generate_account_confirm_code, send_confirm_code_to_fdu_mailbox
 from account.decorators import login_required
 from account.keys import PRIVATE_KEY, PUBLIC_KEY
 from utils.api_utils import get_json_dict
@@ -149,6 +149,18 @@ def user_detail(request):
     json_dict = get_json_dict(data={})
 
     json_dict['data'] = get_user_private_dict(account)
+
+    return JsonResponse(json_dict)
+
+@login_required
+@require_GET
+def get_user_public_detail(request):
+    username = request.GET['username']
+
+    account = Account.objects.get(user__username=username)
+
+    json_dict = get_json_dict(data={})
+    json_dict['data'] = get_user_public_dict(account)
 
     return JsonResponse(json_dict)
 
