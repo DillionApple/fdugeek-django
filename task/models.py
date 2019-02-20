@@ -4,7 +4,7 @@ from account.models import Account
 
 class Task(models.Model):
 
-    TASK_TYPES = (("build_group", "开发团队招募"), ("programing", "开发任务"), ("tutor", "家教"), ("others", "其它"))
+    TASK_TYPES = (("build_group", "开发团队招募"), ("programing", "开发任务"), ("knowledge_communication", "知识交流"), ("tutor", "家教"), ("others", "其它"))
     TASK_STATES = (("active", "招募中"), ("finished", "报名截止"))
 
     title = models.CharField(max_length=128)
