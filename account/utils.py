@@ -1,5 +1,6 @@
 import random
-from io import StringIO
+import requests
+from bs4 import BeautifulSoup
 import smtplib
 from email.mime.text import MIMEText
 
@@ -59,3 +60,28 @@ def send_confirm_code_to_fdu_mailbox(username, confirm_code):
     s.login(from_addr, smtp_password)
     s.send_message(msg)
     s.quit()
+
+def check_fdu_auth(username, password):
+
+    form_data = {
+        'local': 'zh_CN',
+        'uid': username,
+        'password': password,
+        'domain': 'fudan.edu.cn',
+        'nodetect': 'false',
+        'action:login': ''
+    }
+
+
+    session = requests.session()
+    response = session.post('http://mail.fudan.edu.cn/coremail/index.jsp', data=form_data)
+
+    soup = BeautifulSoup(response.text, features="html.parser")
+
+    try:
+        user_email_name = soup.select('.account')[0].text
+    except:
+        return None
+
+    return user_email_name
+

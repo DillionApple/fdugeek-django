@@ -2,6 +2,7 @@ import json
 import time
 import requests
 import jwt
+import re
 
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth import authenticate, login, logout
@@ -12,11 +13,11 @@ from django.utils import timezone
 from django.core.files.base import ContentFile
 
 from account.models import Account, AccountConfirmCode
-from account.utils import get_user_private_dict, get_user_public_dict, generate_account_confirm_code, send_confirm_code_to_fdu_mailbox
+from account.utils import *
 from account.decorators import login_required
 from account.keys import PRIVATE_KEY, PUBLIC_KEY
 from utils.api_utils import get_json_dict
-from utils.util_functions import get_md5, check_fdu_auth
+from utils.util_functions import get_md5
 
 @require_GET
 def get_public_key(request):
@@ -26,34 +27,64 @@ def get_public_key(request):
 
 @require_POST
 def user_login(request):
-    request.POST = json.loads(request.body.decode('utf-8'))
-    username = request.POST['username']
-    password = request.POST['password']
 
-    json_dict = get_json_dict(data={}, message="Login Success")
+    def get_user_login_success_response(user):
+        expires = timezone.now() + timezone.timedelta(days=7)
+        jwt_payload = get_user_private_dict(user.account)
+        jwt_payload['expires'] = expires.strftime("%Y-%m-%d %H:%M:%S")
+        jwt_token = jwt.encode(jwt_payload, PRIVATE_KEY, algorithm="RS256").decode("utf-8")
+        response = JsonResponse(get_json_dict(data={}, err_code=0, message="Login success"))
+        response.set_cookie('jwt', jwt_token, max_age=604800)
+        return response
+
+    received_data = json.loads(request.body.decode('utf-8'))
+    username = received_data['username']
+    password = received_data['password']
+
+    json_dict = get_json_dict(data={})
 
     user = authenticate(username=username, password=password)
-    if user:
-        if user.is_active:
-            expires = timezone.now() + timezone.timedelta(days=7)
-            jwt_payload = get_user_private_dict(user.account)
-            jwt_payload['expires'] = expires.strftime("%Y-%m-%d %H:%M:%S")
-            jwt_token = jwt.encode(jwt_payload, PRIVATE_KEY, algorithm="RS256").decode("utf-8")
-            response = JsonResponse(get_json_dict(data={}, err_code=0, message="Login success"))
-            response.set_cookie('jwt', jwt_token, max_age=604800)
+    if user: # user auth success
+        if user.is_active: # user have confirmed its email, login success
+
+            response = get_user_login_success_response(user)
             return response
-        else:
+
+        else: # user have not confirmed its email
             json_dict['err_code'] = -1
             json_dict['message'] = "请验证您的学号邮箱"
             response = JsonResponse(json_dict)
             response.status_code = 403
             return response
-    else:
-        json_dict['err_code'] = -1
-        json_dict['message'] = "用户名或密码错误"
-        response = JsonResponse(json_dict)
-        response.status_code = 403
-        return response
+    else: # user auth fail
+        try:
+            User.objects.get(username=username)
+        except ObjectDoesNotExist as e: # user object does not exist
+            if (re.match("\d{3,11}", username)): # username is the form of a student/staff account
+                nickname = check_fdu_auth(username, password) # check username and password via mail.fudan.edu.cn
+                if nickname != None: # check success, create user
+                    user = User(username=username)
+                    user.set_password(password)
+                    user.is_active = True
+                    user.save()
+                    account = Account(user=user)
+                    account.nickname = nickname
+                    account.save()
+                    user_icon_response = requests.get("https://www.gravatar.com/avatar/{0}?s=256&d=identicon&r=PG".format(user.username))
+                    account.icon.save(name='default_icon', content=ContentFile(user_icon_response.content))
+                    return get_user_login_success_response(user)
+            # user does not exists
+            json_dict['err_code'] = -1
+            json_dict['message'] = "用户不存在"
+            response = JsonResponse(json_dict)
+            response.status_code = 403
+            return response
+        else: # user exists, password is incorrect
+            json_dict['err_code'] = -1
+            json_dict['message'] = "密码错误"
+            response = JsonResponse(json_dict)
+            response.status_code = 403
+            return response
 
 @login_required
 def refresh_token(request):

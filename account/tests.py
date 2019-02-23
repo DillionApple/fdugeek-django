@@ -4,6 +4,7 @@ from time import sleep
 from django.test import TestCase
 from django.test import Client
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 from account.models import *
 from cs_plus import settings
@@ -112,6 +113,37 @@ class AccountTestCase(TestCase):
         assert response.status_code == 401
         assert response.json()['err_code'] == -1
         assert response.json()['message'] == "Login Required"
+
+        # user is not registered
+        # 1. fudan email account is incorrect
+
+        username = "13307130109"
+        password = "wrong_password"
+        nickname = "王耀辉"
+
+        response = c.post(LOGIN_URL, {'username': username, "password": password}, content_type="application/json")
+        assert response.status_code == 403
+        assert response.json()['message'] == "用户不存在"
+
+        # 2. fudan email account is correct
+        password = "fake_password" # [NOTE]: change this value to the real password of fudan email
+
+        response = c.post(LOGIN_URL, {'username': username, "password": password}, content_type="application/json")
+        print(response.json())
+        assert response.json()['message'] == "Login success"
+        assert response.status_code == 200
+        account = Account.objects.get(user__username=username)
+        assert account.user.is_active
+        assert account.nickname == nickname
+
+        jwt_token = response.cookies['jwt'].value.encode('utf-8')
+        decoded = jwt.decode(jwt_token, self.public_key, algorithms=["RS256"])
+        assert decoded['username'] == username
+
+        # not existed user
+        response = c.post(LOGIN_URL, {'username': "not_existed", "password": "password"}, content_type="application/json")
+        assert response.status_code == 403
+        assert response.json()['message'] == "用户不存在"
 
     # test functions
     # change_detail
