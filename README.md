@@ -38,7 +38,7 @@ pull request 会在 review 之后，合并到对应分支
 
 分支、merge流程图如下：
 
-![分支、merge流程图](https://pic2.zhimg.com/80/v2-54089c7d03525449d89cd6c017a6898a_r.jpg)
+![分支、merge流程图](https://pic1.zhimg.com/80/v2-e07177517a65128f4dc30c4cd2c03199_hd.png)
 
 ### 代码流程规范
 
