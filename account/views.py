@@ -111,7 +111,7 @@ def register(request):
         user = User.objects.get(username=username)
     except ObjectDoesNotExist as e:
 
-        if not safe_password(password):
+        if not check_safe_password(password):
             return JsonResponse(get_json_dict(data={}, err_code=-1, message="密码不安全，请设置6-20位包含大写字母，小写字母，数字和特殊字符中至少两种的密码"),
                                 status=403)
 
@@ -128,7 +128,7 @@ def register(request):
         if user.is_active:
             return JsonResponse(get_json_dict(data={}, err_code=-1, message="您已注册过"))
 
-        if not safe_password(password):
+        if not check_safe_password(password):
             return JsonResponse(get_json_dict(data={}, err_code=-1, message="密码不安全，请设置6-20位包含大写字母，小写字母，数字和特殊字符中至少两种的密码"),
                                 status=403)
 
@@ -239,7 +239,7 @@ def change_password(request):
     user = authenticate(username=request.user.username, password=old_password)    
     if user:
 
-        if not safe_password(new_password):
+        if not check_safe_password(new_password):
             return JsonResponse(get_json_dict(data={}, err_code=-1, message="密码不安全，请设置6-20位包含大写字母，小写字母，数字和特殊字符中至少两种的密码"),
                                 status=403)
 

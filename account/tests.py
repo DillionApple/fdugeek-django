@@ -137,7 +137,6 @@ class AccountTestCase(TestCase):
         password = "fake_pwd"  # [NOTE]: change this value to the real password of fudan email OR THE TEST WILL FAIL !!
 
         response = c.post(LOGIN_URL, {'username': username, "password": password}, content_type="application/json")
-        print(response.json())
         assert response.json()['message'] == "Login success"
         assert response.status_code == 200
         account = Account.objects.get(user__username=username)
@@ -231,11 +230,11 @@ class AccountTestCase(TestCase):
 class UtilsTestCase(TestCase):
 
     def test_password_safety_reg_exp(self):
-        from account.utils import safe_password
+        from account.utils import check_safe_password
         good_pwd_list = ['au2bf8eh', 'Password', '12345^&*']
         bad_pwd_list = ['geiuhvwuef', '3496239123', '!@&^$&^$%&@', 'AUHSIUHFWF', '1sd',
                         '3h9f82h3f8h2498gh394guh394hih23f92h83r9']
         for pwd in good_pwd_list:
-            assert safe_password(pwd)
+            assert check_safe_password(pwd)
         for pwd in bad_pwd_list:
-            assert not safe_password(pwd)
+            assert not check_safe_password(pwd)
