@@ -21,6 +21,8 @@ CHANGE_ICON_URL = "/account/change_icon/"
 PUBLIC_KEY_URL = "/account/public_key/"
 REFRESH_TOKEN_URL = "/account/refresh_token/"
 
+PASSWORD = "safe_password"
+
 class AccountTestCase(TestCase):
 
     public_key = None
@@ -32,7 +34,7 @@ class AccountTestCase(TestCase):
         self.public_key = response.content
 
         user = User(username="user0")
-        user.set_password("password")
+        user.set_password(PASSWORD)
         user.save()
         account = Account(user=user, nickname="nickname0")
         account.save()
@@ -43,8 +45,14 @@ class AccountTestCase(TestCase):
 
         c = Client()
 
-        # start to register a new user
-        response = c.post(REGISTER_URL, {'username': 'new_user0', 'password': 'password'}, content_type="application/json")
+        # start to register a new user with unsafe password
+        unsafe_password = 'password'
+        response = c.post(REGISTER_URL, {'username': 'new_user0', 'password': unsafe_password}, content_type="application/json")
+        assert(response.status_code == 403)
+        assert(response.json()['message'] == "密码不安全，请设置6-20位包含大写字母，小写字母，数字和特殊字符中至少两种的密码")
+
+        # start to register a new user with safe password
+        response = c.post(REGISTER_URL, {'username': 'new_user0', 'password': PASSWORD}, content_type="application/json")
         new_user0 = User.objects.get(username="new_user0")
         assert(new_user0.is_active == False)
 
@@ -77,7 +85,7 @@ class AccountTestCase(TestCase):
         assert response.status_code == 403
 
         # correct user password
-        response = c.post(LOGIN_URL, {'username': "user0", "password": "password"}, content_type="application/json")
+        response = c.post(LOGIN_URL, {'username': "user0", "password": PASSWORD}, content_type="application/json")
         assert response.status_code == 200
 
         jwt_token = response.cookies['jwt'].value.encode('utf-8')
@@ -116,7 +124,7 @@ class AccountTestCase(TestCase):
 
         # user is not registered
         # 1. fudan email account is incorrect
-
+        # TODO: might have some problems in the following tests.
         username = "13307130109"
         password = "wrong_password"
         nickname = "王耀辉"
@@ -126,10 +134,9 @@ class AccountTestCase(TestCase):
         assert response.json()['message'] == "用户不存在"
 
         # 2. fudan email account is correct
-        password = "fake_password" # [NOTE]: change this value to the real password of fudan email
+        password = "fake_pwd"  # [NOTE]: change this value to the real password of fudan email OR THE TEST WILL FAIL !!
 
         response = c.post(LOGIN_URL, {'username': username, "password": password}, content_type="application/json")
-        print(response.json())
         assert response.json()['message'] == "Login success"
         assert response.status_code == 200
         account = Account.objects.get(user__username=username)
@@ -150,7 +157,7 @@ class AccountTestCase(TestCase):
     def test_change_detail(self):
 
         c = Client()
-        response = c.post(LOGIN_URL, {'username': "user0", "password": "password"}, content_type="application/json")
+        response = c.post(LOGIN_URL, {'username': "user0", "password": PASSWORD}, content_type="application/json")
         assert response.status_code == 200
 
         new_detail = {
@@ -179,17 +186,21 @@ class AccountTestCase(TestCase):
     # change_password
     def test_change_password(self):
         c = Client()
-        response = c.post(LOGIN_URL, {'username': 'user0', 'password': 'password'}, content_type="application/json")
+        response = c.post(LOGIN_URL, {'username': 'user0', 'password': PASSWORD}, content_type="application/json")
         assert response.status_code == 200
-
-        new_password = "new_password"
 
         # wrong old password
         response = c.post(CHANGE_PASSWORD_URL, {"old_password": "wrong_password", "new_password": "new_password"}, content_type="application/json")
         assert response.status_code == 403
 
+        # correct old password but unsafe new password
+        unsafe_password = "password"
+        response = c.post(CHANGE_PASSWORD_URL, {"old_password": PASSWORD, "new_password": unsafe_password}, content_type="application/json")
+        assert response.status_code == 403
+        assert(response.json()['message'] == "密码不安全，请设置6-20位包含大写字母，小写字母，数字和特殊字符中至少两种的密码")
+
         # correct old password
-        response = c.post(CHANGE_PASSWORD_URL, {"old_password": "password", "new_password": "new_password"}, content_type="application/json")
+        response = c.post(CHANGE_PASSWORD_URL, {"old_password": PASSWORD, "new_password": "new_safe_password"}, content_type="application/json")
         assert response.status_code == 200
 
         # logout
@@ -197,20 +208,33 @@ class AccountTestCase(TestCase):
         assert response.status_code == 200
 
         # login using old password
-        response = c.post(LOGIN_URL, {"username": "user0", "password": "password"}, content_type="application/json")
+        response = c.post(LOGIN_URL, {"username": "user0", "password": "old_password"}, content_type="application/json")
         assert response.status_code == 403
 
-        # login using
-        response = c.post(LOGIN_URL, {"username": "user0", "password": "new_password"}, content_type="application/json")
+        # login using new safe password
+        response = c.post(LOGIN_URL, {"username": "user0", "password": "new_safe_password"}, content_type="application/json")
         assert response.status_code == 200
 
     # test functions
     # change_icon
     def test_change_icon(self):
         c = Client()
-        response = c.post(LOGIN_URL, {'username': 'user0', 'password': 'password'}, content_type="application/json")
+        response = c.post(LOGIN_URL, {'username': 'user0', 'password': PASSWORD}, content_type="application/json")
         assert response.status_code == 200
 
         with open("account/test_icon.png", "rb") as f:
             response = c.post(CHANGE_ICON_URL, {'picture': f})
             assert response.status_code == 200
+
+
+class UtilsTestCase(TestCase):
+
+    def test_password_safety_reg_exp(self):
+        from account.utils import check_safe_password
+        good_pwd_list = ['au2bf8eh', 'Password', '12345^&*']
+        bad_pwd_list = ['geiuhvwuef', '3496239123', '!@&^$&^$%&@', 'AUHSIUHFWF', '1sd',
+                        '3h9f82h3f8h2498gh394guh394hih23f92h83r9']
+        for pwd in good_pwd_list:
+            assert check_safe_password(pwd)
+        for pwd in bad_pwd_list:
+            assert not check_safe_password(pwd)
