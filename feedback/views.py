@@ -13,11 +13,12 @@ from utils.api_utils import get_json_dict
 def feedback(request):
     request.POST = json.loads(request.body.decode('utf-8'))
     
-    #Each feedback should be no longer than 500 letters, or it will be truncated.
-    feedback_info = request.POST['feedback'].strip()[:500]
+    # Each feedback should be no longer than 500 letters, or it will be truncated.
+    feedback_info = request.POST.get('feedback')
+    contact_email = request.POST.get('contact_email')
     if len(feedback_info) == 0:
         return JsonResponse(get_json_dict(data={}, err_code=-1, message="Empty Feedback"))
     else:
-        feedback = Feedback(feedback=feedback_info)
+        feedback = Feedback(feedback=feedback_info, contact_email=contact_email)
         feedback.save()
         return JsonResponse(get_json_dict(data={}, err_code=0, message="Feedback Success"))

@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 
 from account.models import *
-from cs_plus import settings
 
 LOGIN_URL = "/account/login/"
 REGISTER_URL = "/account/register/"
@@ -134,8 +133,8 @@ class AccountTestCase(TestCase):
         assert response.json()['message'] == "用户不存在"
 
         # 2. fudan email account is correct
-        password = "fake_pwd"  # [NOTE]: change this value to the real password of fudan email OR THE TEST WILL FAIL !!
-
+        password = "fake_password"  # [NOTE]: change this value to the real password of fudan email OR THE TEST WILL FAIL !!
+        # TODO: the implementation of LOGIN_URL is changed, so the test following will fail.
         response = c.post(LOGIN_URL, {'username': username, "password": password}, content_type="application/json")
         assert response.json()['message'] == "Login success"
         assert response.status_code == 200

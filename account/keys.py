@@ -3,3 +3,6 @@ __public_key_file = open("rsa-keys.pub", "rb")
 
 PRIVATE_KEY = __private_key_file.read()
 PUBLIC_KEY = __public_key_file.read()
+
+__private_key_file.close()
+__public_key_file.close()
