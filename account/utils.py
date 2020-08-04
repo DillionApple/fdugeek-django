@@ -85,10 +85,5 @@ def check_fdu_auth(username, password):
 
     return user_email_name
 
-def check_safe_password(password):
 
-    # 允许6-20位的大小写字母，数字，部分特殊符号!@#$%^&*，且不允许仅由四种中的一种组成
-    pattern = '(?![a-z]+$)(?![A-Z]+$)(?![0-9]+$)(?![\!@#\$%\^&\*_]+$)(^[a-zA-Z0-9\!@#\$%\^&\*_]{6,20}$)'
-
-    return bool(re.match(pattern, password))
 
