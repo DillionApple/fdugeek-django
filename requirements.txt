@@ -10,7 +10,7 @@ django-cors-headers==2.4.0
 idna==2.7
 Pillow==5.3.0
 pycparser==2.19
-PyJWT==1.7.1
+PyJWT==2.4.0
 pytz==2018.5
 requests==2.19.1
 six==1.12.0
